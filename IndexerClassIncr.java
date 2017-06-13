@@ -5,13 +5,16 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -45,7 +48,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 
-public class IndexerClass {
+public class IndexerClassIncr {
 	
 	private String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
 	private String indexPath = "src/index";
@@ -57,25 +60,132 @@ public class IndexerClass {
 
 	private IndexWriter idx;
 	
+	// save the list containg the tweets by day
+	private Map <String,List <JSONObject>> listOfTweetsByDays;
+	private String baseNameList = "tweetsDay";
+	String [] days;
+	
+	public IndexerClassIncr(){
+
+		listOfTweetsByDays = new HashMap <String,List <JSONObject>> (30);
+
+		listOfTweetsByDays.put("tweetsDay02", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay03", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay04", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay05", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay06", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay07", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay08", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay09", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay10", new LinkedList <JSONObject> ());
+		listOfTweetsByDays.put("tweetsDay11", new LinkedList <JSONObject> ());
+		
+		days = new String [10];
+		days[0] = "02";
+		days[1] = "03";
+		days[2] = "04";
+		days[3] = "05";
+		days[4] = "06";
+		days[5] = "07";
+		days[6] = "08";
+		days[7] = "09";
+		days[8] = "10";
+		days[9] = "11";
+		
+		
+		// Get all the tweets and save them to be incrementaly indexed
+		JSONParser parser = new JSONParser();
+		try (BufferedReader br = new BufferedReader(new FileReader(tweetsPath))) {
+
+			String line = br.readLine(); // The first line is dummy
+			Object obj;
+			while(line != null){
+				obj = parser.parse(line);
+				JSONObject tweet = (JSONObject) obj;
+				// Extract Date
+				String date = (String) tweet.get("created_at");
+				// Extract the specific date
+				String [] date_sep = date.split(" ");
+				//Extract the day
+				String day = date_sep[2];
+				// The name of the list in the hashMap
+				String listName = baseNameList + day;
+
+				if (listOfTweetsByDays.containsKey(listName))
+					listOfTweetsByDays.get(listName).add(tweet);
+				else
+					System.out.println("No list to add " + date);
+
+				line = br.readLine();
+			}
+			
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		} catch (org.json.simple.parser.ParseException e) {
+
+			e.printStackTrace();
+		}	
+	}
+	
+	
+	/**
+	 * @param analyzer
+	 * @param similarity
+	 * This class controls the incremental build of the indexer and the quering
+	 * first creates and indexer, then, day by day, adds the tweets and performs the queries
+	 */
+	public void indexerAndQueiesController(Analyzer analyzer, Similarity similarity){
+		
+	// create a new indexer, the variable CREATE is true
+	System.out.println("Create index");
+	this.openIndex(analyzer, similarity);
+	this.close();
+	
+	
+		
+	// this is needed, we don't want to create new indexer for each day
+	create = false;
+	
+	String listName = "";
+	
+	Writer writer = null;
+	String submissionName = "results.txt";
+	try {
+		writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(submissionName), "utf-8"));
+
+	} catch (UnsupportedEncodingException e) {
+		e.printStackTrace();
+	} catch (FileNotFoundException e) {
+		e.printStackTrace();
+	}
+	
+
+	for (String day : days){
+		// first index the tweets
+		// open the index
+		this.openIndex(analyzer, similarity);
+		// get the name of the list
+		listName = baseNameList + day;
+		// index the tweets
+		indexDocuments(listOfTweetsByDays.get(listName));
+		//close index
+		this.close();
+		// then perform the queries
+		indexSearch(writer, analyzer, similarity, day);
+	}
+	
+	
+
+	
+	
+	
+	}
+	
+
 	public void openIndex(Analyzer analyzer, Similarity similarity) {
 
 		try {
-			System.out.println("Creating and openning index...");
-			// ====================================================
-			// Select the data analyser to tokenise document data
-			//analyzer = new StandardAnalyzer();
-
-			// ====================================================
-			// Configure the index to be created/opened
-			//
-			// IndexWriterConfig has many options to be set if needed.
-			//
-			// Example: for better indexing performance, if you
-			// are indexing many documents, increase the RAM
-			// buffer. But if you do this, increase the max heap
-			// size to the JVM (eg add -Xmx512m or -Xmx1g):
-			//
-			// iwc.setRAMBufferSizeMB(256.0);
 			IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 			if (similarity != null)
 				iwc.setSimilarity(similarity);
@@ -99,41 +209,25 @@ public class IndexerClass {
 
 	}
 	
-	
-	public void indexDocuments() {
+	public void indexDocuments(List<JSONObject> tweetsByDay) {
 		if (idx == null)
 			return;
 		System.out.println("Indexing documents...");
 		// ====================================================
 		// Parse the Answers data
-		JSONParser parser = new JSONParser();
-		try (BufferedReader br = new BufferedReader(new FileReader(tweetsPath))) {
-
-			String line = br.readLine(); // The first line is dummy
-			Object obj;
-			while(line != null){
-				obj = parser.parse(line);
-				JSONObject tweet = (JSONObject) obj;
-				indexDoc(tweet);
-				line = br.readLine();
-			}
-			
-			
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		} catch (org.json.simple.parser.ParseException e) {
-
-			e.printStackTrace();
+		
+		
+		for (JSONObject tweet: tweetsByDay){
+//			JSONObject tweet = (JSONObject) obj;
+			indexDoc(tweet);
 		}
+
 	}
 
 	private void indexDoc(JSONObject tweet) {
 
 		Document doc = new Document();
-		
 		String id = "0";
-		
 		try {
 			
 			
@@ -170,12 +264,11 @@ public class IndexerClass {
 			// Add the document to the index
 			if (idx.getConfig().getOpenMode() == OpenMode.CREATE) {
 
-				//System.out.println("adding " + Id);
 				idx.addDocument(doc);
 
-			} else {
-//				System.out.println("Now what?");
-				idx.updateDocument(new Term("Id", id.toString()), doc);
+			} else if (idx.getConfig().getOpenMode() == OpenMode.CREATE_OR_APPEND) {
+				idx.addDocument(doc);
+//				idx.updateDocument(new Term("Id", id.toString()), doc);
 			}
 		} catch (IOException e) {
 			System.out.println("Error adding document " + id);
@@ -187,23 +280,16 @@ public class IndexerClass {
 		}
 	}
 
-	public void indexSearch(Analyzer analyzer, Similarity similarity) {
+	public void indexSearch(Writer writer, Analyzer analyzer, Similarity similarity, String day) {
 		System.out.println("Quering and results...");
 		//The index reader
 		IndexReader reader = null;
-		Writer writer = null;
-//		int queryId = 0;
+
+		int numberOfTweets = 5;
+		boolean debug = true;
 
 		try {
-//			String submissionName = "baseline3_w0.9.txt";
-			String submissionName = "results.txt";
-			int numberOfTweets = 5;
-			boolean debug = true;
-			
-			
-			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(submissionName), "utf-8"));
-			//YYYYMMDD topic_id Q0 tweet_id rank score runtag
-			//writer.write("YYYYMMDD" + "topic_id" + "\t" +"Q0" + "\t" + "tweet_id" + "\t" + "rank" + "\t" + "score" + "\t" + "runtag\n");
+
 			//fetch index in the directory provided
 			reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
 			//initialize the searcher and the analyzer (the same one used to write the index)
@@ -223,22 +309,6 @@ public class IndexerClass {
 
 			String[] fields = {"Day", "Text", "Text" };
 			BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST, BooleanClause.Occur.MUST, BooleanClause.Occur.MUST};
-
-			
-			String [] days = new String [10];
-			days[0] = "02";
-			days[1] = "03";
-			days[2] = "04";
-			days[3] = "05";
-			days[4] = "06";
-			days[5] = "07";
-			days[6] = "08";
-			days[7] = "09";
-			days[8] = "10";
-			days[9] = "11";
-//			
-//			String [] days = new String [1];
-//			days[0] = "02";
 			
 			Query query = null;
 			
@@ -253,97 +323,90 @@ public class IndexerClass {
 				String topicId = "";
 				
 				int i = 0;
-				//Percorrer os dias
-				for (String day : days){
-					
 
-//					System.out.println("/////---------------------------------------------------///////");
-//					System.out.println("Day: " + day);
-					//So para um dia
-					runTag = "#run" + String.valueOf(i);
-					i++;
-					for (Object topicObject : topics){
-						
-						JSONObject topic = (JSONObject) topicObject;
-						topicId = (String) topic.get("topid");
-						queryL[0] = day;
-						topicTitle = (String)  topic.get("title");
-						queryL[1] = topicTitle;
-						queryL[2] = (String)  topic.get("description");
-						
-						
+				//					System.out.println("/////---------------------------------------------------///////");
+				//					System.out.println("Day: " + day);
+				//So para um dia
+				runTag = "#run" + String.valueOf(i);
+				i++;
+				for (Object topicObject : topics){
+
+					JSONObject topic = (JSONObject) topicObject;
+					topicId = (String) topic.get("topid");
+					queryL[0] = day;
+					topicTitle = (String)  topic.get("title");
+					queryL[1] = topicTitle;
+					queryL[2] = (String)  topic.get("description");
+
+
+					try {
+						query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
+					} catch (org.apache.lucene.queryparser.classic.ParseException e) {
+						queryL[1] = queryL[1].replace("\"", "");
+						queryL[2] = queryL[2].replace("\"", "");
+
 						try {
 							query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
-						} catch (org.apache.lucene.queryparser.classic.ParseException e) {
-							queryL[1] = queryL[1].replace("\"", "");
-							queryL[2] = queryL[2].replace("\"", "");
-							
-							try {
-								query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
-							} catch (org.apache.lucene.queryparser.classic.ParseException e2) {
-//								System.out.println("Error parsing query string.");
-//								System.out.println(topicId);
-//								System.out.println(queryL[1]);
-//								System.out.println(queryL[2]);
-								e2.printStackTrace();
-							}
+						} catch (org.apache.lucene.queryparser.classic.ParseException e2) {
+							//System.out.println("Error parsing query string.");
+							//System.out.println(topicId);
+							//System.out.println(queryL[1]);
+							//System.out.println(queryL[2]);
+							e2.printStackTrace();
 						}
-						
-						
-//						//look on the index, returning the top 100 answers
-						
-						TopDocs results = searcher.search(query, numberOfTweets);
-						ScoreDoc[] hits = results.scoreDocs;
-						int numTotalHits = results.totalHits;
-						
+					}
+
+
+					//						//look on the index, returning the top 100 answers
+
+					TopDocs results = searcher.search(query, numberOfTweets);
+					ScoreDoc[] hits = results.scoreDocs;
+					int numTotalHits = results.totalHits;
+
+					if (debug){
+						System.out.println("-------------------------------------------------------------------------------------------");
+						System.out.println(topicTitle + " " + topicId);
+						System.out.println(numTotalHits + " total matching documents");
+					}
+
+
+					//iterate through the answers 
+					for (int j = 0; j < numberOfTweets && j < numTotalHits; j++) {
+
+						Document doc = searcher.doc(hits[j].doc);
+						String tweetId = doc.get("Id");
+						String date = doc.get("Date");
+
+
+
+						String[] dd = date.split(" ");
+
+
+						String dateToWrite = dd[5] + "08" + dd[2];
+
+						float score = hits[j].score;
+
 						if (debug){
-							System.out.println("-------------------------------------------------------------------------------------------");
-							System.out.println(topicTitle + " " + topicId);
-							System.out.println(numTotalHits + " total matching documents");
+							String text = doc.get("Text");
+							String hashtags = doc.get("Hashtags");
+							System.out.println(date);
+							System.out.println(text);
+							System.out.println(hashtags);
 						}
 
-						
-						//iterate through the answers 
 
-//						int numberTopTweets = 20;
-//						List <String> hashList = new LinkedList <String> (); 
-						for (int j = 0; j < numberOfTweets && j < numTotalHits; j++) {
+						//hashList.add(0, hashtags);
 
-							Document doc = searcher.doc(hits[j].doc);
-							String tweetId = doc.get("Id");
-							String date = doc.get("Date");
+						writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
 
-							
-							
-							String[] dd = date.split(" ");
-							
-//							System.out.println(dd[5] + dd[1] + dd[2]);
-							String dateToWrite = dd[5] + "08" + dd[2];
-//							String dateToWrite = dd[5] + dd[1] + dd[2];
-							
-							float score = hits[j].score;
-							
-							if (debug){
-								String text = doc.get("Text");
-								String hashtags = doc.get("Hashtags");
-								System.out.println(date);
-								System.out.println(text);
-								System.out.println(hashtags);
-							}
+					}
 
-							
-//							hashList.add(0, hashtags);
+					//for (String s: hashList)
+					//	System.out.println(s);
 
-							writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
+				} 
 
-						}
-						
-//						for (String s: hashList)
-//							System.out.println(s);
-						
-					 } 
-				}
-						
+
 			} catch (org.json.simple.parser.ParseException e) {
 						
 						e.printStackTrace();

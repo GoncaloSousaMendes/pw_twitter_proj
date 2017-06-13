@@ -28,22 +28,32 @@ public class Main {
 		
 		
 		Map<String, Analyzer> analyzerPerField = new HashMap<>();
-		analyzerPerField.put("Text", new StandardAnalyzer());
+//		analyzerPerField.put("TextForTopic", new StandardAnalyzer());
+//		analyzerPerField.put("TextForDescription", new StandardAnalyzer());
 		analyzerPerField.put("Text", new StandardAnalyzer());
 		analyzerPerField.put("Day", new StandardAnalyzer());
 		PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
 		
 		
 		
+		IndexerClassIncr indIncr = new IndexerClassIncr();
+		
+		indIncr.indexerAndQueiesController(analyzer, null);
+		
+		
+		
+		
 //		Analyzer analyzer = new StandardAnalyzer();
 		
-		IndexerClass indexer = new IndexerClass();
+//		IndexerClass indexer = new IndexerClass();
 		
 //		indexer.openIndex(analyzer, null);
 //		indexer.indexDocuments();
 //		indexer.close();
 		
-		indexer.indexSearch(analyzer, null);
+//		indexer.indexSearch(analyzer, null);
+		
+		System.out.println("Done");
 		
 		
 		  
