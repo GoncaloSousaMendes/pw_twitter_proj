@@ -9,8 +9,10 @@ import java.io.Writer;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,8 @@ public class IndexerClass {
 //	private String topicPath = "src/profiles/TREC2015-MB-noeval-topics-culled.json";
 	private String topicPath = "src/profiles/pw_top_10_topics.json";
 	
+	
+	private UserRank ranksForUsers;
 	
 	//save the tweets, to find repetitions
 	static Map <String, JSONObject> tweetsMap;
@@ -112,7 +116,7 @@ public class IndexerClass {
 	}
 	
 	public void indexDocuments() {
-		
+		ranksForUsers = new UserRank();
 		if (idx == null)
 			return;
 		System.out.println("Indexing documents...");
@@ -127,6 +131,8 @@ public class IndexerClass {
 				obj = parser.parse(line);
 				JSONObject tweet = (JSONObject) obj;
 				indexDoc(tweet);
+				//Adicionar o user
+				ranksForUsers.saveUser( (JSONObject) tweet.get("user"));
 				line = br.readLine();
 			}
 			
@@ -138,6 +144,11 @@ public class IndexerClass {
 
 			e.printStackTrace();
 		}
+		
+		System.out.println("Max followers: " + ranksForUsers.getmaxFollowers());
+		System.out.println("Number of users: " + ranksForUsers.getNumberOfUsers());
+		
+		ranksForUsers.scoreUsers();
 	}
 
 	private void indexDoc(JSONObject tweet) {
@@ -147,6 +158,7 @@ public class IndexerClass {
 		String id = "0";
 		
 		try {
+			
 			
 			
 			// Extract field Id
@@ -212,8 +224,9 @@ public class IndexerClass {
 		}
 	}
 
-	public void indexSearch(Analyzer analyzer, Similarity similarity) {
+	public void indexSearch(Analyzer analyzer, Similarity similarity, String runTag) {
 		System.out.println("Quering and results...");
+
 		//The index reader
 		IndexReader reader = null;
 		Writer writer = null;
@@ -222,7 +235,8 @@ public class IndexerClass {
 		try {
 //			String submissionName = "baseline3_w0.9.txt";
 			// ficheiro para escrever os resultados para a avaliação
-			String submissionName = "results.txt";
+			String submissionName = runTag + ".txt";
+//			String submissionName = "results.txt";
 			// numero de tweets a guardar
 			int numberOfTweets = 100;
 			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
@@ -264,13 +278,9 @@ public class IndexerClass {
 			days[7] = "09";
 			days[8] = "10";
 			days[9] = "11";
-//			
-//			String [] days = new String [1];
-//			days[0] = "02";
 			
 			Query query = null;
 			
-			String runTag = "";
 
 			try {
 				JSONParser parser = new JSONParser();
@@ -283,7 +293,6 @@ public class IndexerClass {
 				int i = 0;
 				//Percorrer os dias
 				for (String day : days){
-					runTag = "#run" + String.valueOf(i);
 					i++;
 					for (Object topicObject : topics){
 						
@@ -390,11 +399,7 @@ public class IndexerClass {
 	private boolean writeToFile(Writer writer, String date, String topic_id, String tweet_id, int rank, float score, String runTag){
 		//writting format: YYYYMMDD topic_id Q0 tweet_id rank score runtag
 		try{
-			//String formatStr = "%-7s %-7s %-10s %-10s %-10s %-10s%n";
-			//writer.write(String.format(formatStr, Id, "0", docId, rank, score, "run#"));
-			writer.write(date + "\t" + topic_id + "\t" + "0" + "\t" + tweet_id + "\t"+ rank +"\t" + score + "\t" + runTag + "\n");
-			
-//			writer.write(topic_id + "\t" +"0" + "\t" + tweet_id + "\t" + rank + "\t" + score + "\t" + "run#\n");
+			writer.write(date + "\t" + topic_id + "\t" + "0" + "\t" + tweet_id + "\t"+ rank +"\t" + score + "\t" + ("#" + runTag) + "\n");
 			writer.flush();
 
 		}catch (IOException e1) {
@@ -403,7 +408,5 @@ public class IndexerClass {
 
 		return true;
 	}
-
-
 
 }

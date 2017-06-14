@@ -12,6 +12,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.json.simple.JSONArray;
 
@@ -31,6 +32,12 @@ public class Main {
 		
 		long intialTime = System.currentTimeMillis();
 		Map<String, Analyzer> analyzerPerField = new HashMap<>();
+		
+		// Mudar a variavel para fazer diferentes runs e guardar com nomes diferentes
+		
+		String run = args[0];
+		
+		String runTag = "run" + run;
 
 		AnalyserPers analyzerInField = new AnalyserPers();
 		StandardAnalyzer ana = new StandardAnalyzer();
@@ -50,11 +57,12 @@ public class Main {
 		//indexação toda junta
 		IndexerClass indexer = new IndexerClass();
 		
-		indexer.openIndex(analyzer, similarity);
-		indexer.indexDocuments();
-		indexer.close();
-//		
-		indexer.indexSearch(analyzer, similarity);
+//		indexer.openIndex(analyzer, similarity);
+//		indexer.indexDocuments();
+//		indexer.close();
+
+		
+		indexer.indexSearch(analyzer, similarity, runTag);
 		
 		
 		long finalTime = System.currentTimeMillis();
