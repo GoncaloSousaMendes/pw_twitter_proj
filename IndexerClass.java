@@ -221,9 +221,13 @@ public class IndexerClass {
 
 		try {
 //			String submissionName = "baseline3_w0.9.txt";
+			// ficheiro para escrever os resultados para a avaliação
 			String submissionName = "results.txt";
+			// numero de tweets a guardar
 			int numberOfTweets = 100;
+			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
 			boolean debug = false;
+			int numberResults = 2;
 			
 			
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(submissionName), "utf-8"));
@@ -248,7 +252,7 @@ public class IndexerClass {
 			String[] fields = {"Day", "Text", "Text" };
 			BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST, BooleanClause.Occur.MUST, BooleanClause.Occur.MUST};
 
-			
+			// Para percorrer os dias
 			String [] days = new String [10];
 			days[0] = "02";
 			days[1] = "03";
@@ -279,15 +283,11 @@ public class IndexerClass {
 				int i = 0;
 				//Percorrer os dias
 				for (String day : days){
-					
-
-//					System.out.println("/////---------------------------------------------------///////");
-//					System.out.println("Day: " + day);
-					//So para um dia
 					runTag = "#run" + String.valueOf(i);
 					i++;
 					for (Object topicObject : topics){
 						
+						// get the topic and its atributes
 						JSONObject topic = (JSONObject) topicObject;
 						topicId = (String) topic.get("topid");
 						queryL[0] = day;
@@ -299,6 +299,7 @@ public class IndexerClass {
 						try {
 							query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
 						} catch (org.apache.lucene.queryparser.classic.ParseException e) {
+							// some topics have bad char
 							queryL[1] = queryL[1].replace("\"", "");
 							queryL[2] = queryL[2].replace("\"", "");
 							
@@ -318,8 +319,7 @@ public class IndexerClass {
 						}
 						
 						
-//						//look on the index, returning the top 100 answers
-						
+//						//look on the index, returning the top numberOfTweets answers
 						TopDocs results = searcher.search(query, numberOfTweets);
 						ScoreDoc[] hits = results.scoreDocs;
 						int numTotalHits = results.totalHits;
@@ -332,42 +332,27 @@ public class IndexerClass {
 
 						
 						//iterate through the answers 
-
-//						int numberTopTweets = 20;
-//						List <String> hashList = new LinkedList <String> (); 
 						for (int j = 0; j < numberOfTweets && j < numTotalHits; j++) {
 
 							Document doc = searcher.doc(hits[j].doc);
 							String tweetId = doc.get("Id");
 							String date = doc.get("Date");
-
-							
-							
 							String[] dd = date.split(" ");
-							
-//							System.out.println(dd[5] + dd[1] + dd[2]);
+							// data para o ficheiro
 							String dateToWrite = dd[5] + "08" + dd[2];
-//							String dateToWrite = dd[5] + dd[1] + dd[2];
-							
 							float score = hits[j].score;
 							
-							if (debug){
+							if (debug && j<numberResults){
 								String text = doc.get("Text");
 								String hashtags = doc.get("Hashtags");
 								System.out.println(date);
 								System.out.println(text);
 								System.out.println(hashtags);
 							}
-
-							
-//							hashList.add(0, hashtags);
-
+							//escrever para o ficheiro
 							writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
 
 						}
-						
-//						for (String s: hashList)
-//							System.out.println(s);
 						
 					 } 
 				}

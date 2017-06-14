@@ -50,9 +50,9 @@ public class Main {
 		//indexação toda junta
 		IndexerClass indexer = new IndexerClass();
 		
-//		indexer.openIndex(analyzer, similarity);
-//		indexer.indexDocuments();
-//		indexer.close();
+		indexer.openIndex(analyzer, similarity);
+		indexer.indexDocuments();
+		indexer.close();
 //		
 		indexer.indexSearch(analyzer, similarity);
 		
