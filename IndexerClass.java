@@ -145,8 +145,8 @@ public class IndexerClass {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Max followers: " + ranksForUsers.getmaxFollowers());
-		System.out.println("Number of users: " + ranksForUsers.getNumberOfUsers());
+//		System.out.println("Max followers: " + ranksForUsers.getmaxFollowers());
+//		System.out.println("Number of users: " + ranksForUsers.getNumberOfUsers());
 		
 		ranksForUsers.scoreUsers();
 	}
@@ -350,6 +350,9 @@ public class IndexerClass {
 							// data para o ficheiro
 							String dateToWrite = dd[5] + "08" + dd[2];
 							float score = hits[j].score;
+							
+							
+							//TODO: Add userScore
 							
 							if (debug && j<numberResults){
 								String text = doc.get("Text");

@@ -31,7 +31,6 @@ public class UserRank {
 	private long maxFollowers;
 	private Map <String, User> users;
 	
-	
 	public UserRank (){
 		maxFollowers = 0;
 		users = new HashMap<String, User>();
@@ -60,8 +59,6 @@ public class UserRank {
 			
 		}
 	}
-	
-
 	
 	private long computeDaysOnTwitter(String date){
 
@@ -164,12 +161,12 @@ public class UserRank {
 		
 	}
 	
-
-	
 	public int getNumberOfUsers(){
 		return users.size();
 	}
 	
-
+	public double getUserScore(String id){
+		return users.get(id).getScore();
+	}
 
 }

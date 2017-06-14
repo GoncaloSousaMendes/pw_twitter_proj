@@ -25,7 +25,6 @@ import org.json.simple.parser.JSONParser;
 
 public class Main {
 
-	
 
 	public static void main(String[] args) {
 		
@@ -35,13 +34,27 @@ public class Main {
 		
 		// Mudar a variavel para fazer diferentes runs e guardar com nomes diferentes
 		
-		String run = args[0];
+		if(args.length != 3){
+			System.out.println("Not enough arguments");
+			System.out.println("Usage: int numbeOfTheRun String analysers int gramSize");
+			System.out.println("Possible analysers: Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball;");
+			System.exit(0);
+		}
 		
+		String run = args[0];
+		//Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball
+		String analysers = args[1];
+		if (analysers.equals("")){
+			System.out.println("Analyzers is empty");
+			System.exit(0);
+		}
+			
+		int gramSzie =  Integer.valueOf(args[2]);
 		String runTag = "run" + run;
 
-		AnalyserPers analyzerInField = new AnalyserPers();
+		AnalyserPers analyzerInField = new AnalyserPers(analysers, gramSzie);
 		StandardAnalyzer ana = new StandardAnalyzer();
-		analyzerPerField.put("Text", ana);
+		analyzerPerField.put("Text", analyzerInField);
 		analyzerPerField.put("Day", ana);
 		PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
 		
@@ -57,9 +70,9 @@ public class Main {
 		//indexação toda junta
 		IndexerClass indexer = new IndexerClass();
 		
-//		indexer.openIndex(analyzer, similarity);
-//		indexer.indexDocuments();
-//		indexer.close();
+		indexer.openIndex(analyzer, similarity);
+		indexer.indexDocuments();
+		indexer.close();
 
 		
 		indexer.indexSearch(analyzer, similarity, runTag);

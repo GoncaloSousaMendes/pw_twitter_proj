@@ -8,6 +8,9 @@ import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.StopwordAnalyzerBase;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.commongrams.CommonGramsFilter;
+import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
+import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents;
 import org.apache.lucene.analysis.shingle.ShingleFilter;
 import org.apache.lucene.analysis.snowball.SnowballFilter;
@@ -29,12 +32,21 @@ public class AnalyserPers extends StopwordAnalyzerBase {
 
 	/** Default maximum allowed token length */
 	private int maxTokenLength = 25;
+	
+	
+	//Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball
+	// String containing the analysers to use
+	private String analysers;
+	//The size of the grams
+	private int gramSize;
 
 	/**
 	 * Builds an analyzer with the default stop words ({@link #STOP_WORDS_SET}).
 	 */
-	public AnalyserPers() {
+	public AnalyserPers(String analysers, int gramS) {
 		super(stopSet);
+		this.analysers = analysers;
+		this.gramSize = gramS;
 	}
 
 	@Override
@@ -46,10 +58,96 @@ public class AnalyserPers extends StopwordAnalyzerBase {
 		// you can provide different TokenStremComponents according to the fieldName
 		
 		final StandardTokenizer src = new StandardTokenizer();
+
 		
 		TokenStream tok = null;
-		tok = new StandardFilter(src);					// text into non punctuated text
-//		tok = new LowerCaseFilter(src);					// changes all text into lowercase
+		
+		String [] analyserToUse = analysers.split(";");
+
+		boolean stand = false;
+		boolean lower = false;
+		boolean stop = false;
+		boolean shingle = false;
+		boolean commom = false;
+		boolean ngram = false;
+		boolean edge = false;
+		boolean snowball = false;
+
+		for (String a: analyserToUse){
+			
+			if (a.equals("Standard"))
+				stand = true;
+			
+			else if (a.equals("Lower"))
+				lower = true;
+			
+			else if (a.equals("Stop"))
+				stop = true;
+			
+			else if (a.equals("Shingle"))
+				shingle = true;
+			
+			else if (a.equals("Common"))
+				commom = true;
+			
+			else if (a.equals("NGramToken"))
+				ngram = true;
+			
+			else if (a.equals("EdgeNGram"))
+				edge = true;
+			
+			else if (a.equals("Snowball"))
+				snowball = true;
+			
+		}
+		
+		if (!stand && !lower && !stop && !shingle && !commom && !ngram && !edge && !snowball){
+			System.out.println("Invalid analysers");
+			System.exit(0);
+		}
+		
+		
+		if (stand)
+			tok = new StandardFilter(src);
+		
+		if (lower && tok != null)
+			tok = new LowerCaseFilter(tok);
+		else if(lower && tok == null)
+			tok = new LowerCaseFilter(src);
+		
+		if (stop && tok != null)
+			tok = new StopFilter(tok, stopwords);
+		else if(stop && tok == null)
+			tok = new StopFilter(src, stopwords);
+		
+		if (shingle && tok != null)
+			tok = new ShingleFilter(tok, 2, 3);
+		else if(shingle && tok == null)
+			tok = new ShingleFilter(src);
+		
+		if (commom && tok != null)
+			tok = new CommonGramsFilter(tok, stopwords);
+		else if(commom && tok == null)
+			tok = new CommonGramsFilter(src, stopwords);
+		
+		if (ngram && tok != null)
+			tok = new NGramTokenFilter(tok,2,5);
+		else if(ngram && tok == null)
+			tok = new NGramTokenFilter(src,2,5);
+		
+		if (edge && tok != null)
+			tok = new EdgeNGramTokenFilter(tok,2,5);
+		else if(edge && tok == null)
+			tok = new EdgeNGramTokenFilter(src,2,5);
+		
+		if (snowball && tok != null)
+			tok = new SnowballFilter(tok, "English");
+		else if(snowball && tok == null)
+			tok = new SnowballFilter(src, "English");
+		
+		
+//		tok = new StandardFilter(src);					// text into non punctuated text
+//		tok = new LowerCaseFilter(tok);					// changes all text into lowercase
 //		tok = new StopFilter(tok, stopwords);			// removes stop words
 
 //		tok = new ShingleFilter(tok, 2, 3);				// creates word-grams with neighboring works
