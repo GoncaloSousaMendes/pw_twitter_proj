@@ -113,8 +113,8 @@ public class IndexerClassIncr {
 
 				if (listOfTweetsByDays.containsKey(listName))
 					listOfTweetsByDays.get(listName).add(tweet);
-				else
-					System.out.println("No list to add " + date);
+//				else
+//					System.out.println("No list to add " + date);
 
 				line = br.readLine();
 			}
@@ -135,7 +135,7 @@ public class IndexerClassIncr {
 	 * This class controls the incremental build of the indexer and the quering
 	 * first creates and indexer, then, day by day, adds the tweets and performs the queries
 	 */
-	public void indexerAndQueiesController(Analyzer analyzer, Similarity similarity){
+	public void indexerAndQueriesController(Analyzer analyzer, Similarity similarity){
 		
 	// create a new indexer, the variable CREATE is true
 	System.out.println("Create index");
@@ -176,10 +176,12 @@ public class IndexerClassIncr {
 	}
 	
 	
+	try {
+		writer.close();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 
-	
-	
-	
 	}
 	
 
@@ -285,8 +287,8 @@ public class IndexerClassIncr {
 		//The index reader
 		IndexReader reader = null;
 
-		int numberOfTweets = 5;
-		boolean debug = true;
+		int numberOfTweets = 100;
+		boolean debug = false;
 
 		try {
 
@@ -393,17 +395,13 @@ public class IndexerClassIncr {
 							System.out.println(text);
 							System.out.println(hashtags);
 						}
-
-
-						//hashList.add(0, hashtags);
-
-						writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
+						if (!writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag)){
+							System.out.println("Erro wrinting in file");
+							System.exit(0);
+						}
+						
 
 					}
-
-					//for (String s: hashList)
-					//	System.out.println(s);
-
 				} 
 
 
@@ -419,18 +417,15 @@ public class IndexerClassIncr {
 		}
 		
 		finally {
-			try {
-				writer.close();
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					}
+//			try {
+//				writer.close();
+//				} catch (Exception ex) {
+//					ex.printStackTrace();
+//					}
 		}
 
 
 	}
-
-	
-	
 
 	
 	protected void close() {
@@ -444,11 +439,8 @@ public class IndexerClassIncr {
 	private boolean writeToFile(Writer writer, String date, String topic_id, String tweet_id, int rank, float score, String runTag){
 		//writting format: YYYYMMDD topic_id Q0 tweet_id rank score runtag
 		try{
-			//String formatStr = "%-7s %-7s %-10s %-10s %-10s %-10s%n";
-			//writer.write(String.format(formatStr, Id, "0", docId, rank, score, "run#"));
 			writer.write(date + "\t" + topic_id + "\t" + "0" + "\t" + tweet_id + "\t"+ rank +"\t" + score + "\t" + runTag + "\n");
-			
-//			writer.write(topic_id + "\t" +"0" + "\t" + tweet_id + "\t" + rank + "\t" + score + "\t" + "run#\n");
+
 			writer.flush();
 
 		}catch (IOException e1) {

@@ -11,6 +11,8 @@ import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.Similarity;
 import org.json.simple.JSONArray;
 
 import org.json.simple.JSONArray;
@@ -27,33 +29,37 @@ public class Main {
 	public static void main(String[] args) {
 		
 		
+		long intialTime = System.currentTimeMillis();
 		Map<String, Analyzer> analyzerPerField = new HashMap<>();
-//		analyzerPerField.put("TextForTopic", new StandardAnalyzer());
-//		analyzerPerField.put("TextForDescription", new StandardAnalyzer());
-		analyzerPerField.put("Text", new StandardAnalyzer());
-		analyzerPerField.put("Day", new StandardAnalyzer());
+
+		AnalyserPers analyzerInField = new AnalyserPers();
+		StandardAnalyzer ana = new StandardAnalyzer();
+		analyzerPerField.put("Text", ana);
+		analyzerPerField.put("Day", ana);
 		PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
 		
+		Similarity similarity = null;
+//		similarity = new BM25Similarity();
+//		similarity = new LMDirichletSimilarity();
+//		similarity = new TFIDFSimilarity();
 		
+		// Incremental
+//		IndexerClassIncr indIncr = new IndexerClassIncr();
+//		indIncr.indexerAndQueriesController(analyzer, similarity);
 		
-		IndexerClassIncr indIncr = new IndexerClassIncr();
+		//indexação toda junta
+		IndexerClass indexer = new IndexerClass();
 		
-		indIncr.indexerAndQueiesController(analyzer, null);
-		
-		
-		
-		
-//		Analyzer analyzer = new StandardAnalyzer();
-		
-//		IndexerClass indexer = new IndexerClass();
-		
-//		indexer.openIndex(analyzer, null);
+//		indexer.openIndex(analyzer, similarity);
 //		indexer.indexDocuments();
 //		indexer.close();
+//		
+		indexer.indexSearch(analyzer, similarity);
 		
-//		indexer.indexSearch(analyzer, null);
 		
+		long finalTime = System.currentTimeMillis();
 		System.out.println("Done");
+		System.out.println("Time: " + (finalTime - intialTime));
 		
 		
 		  

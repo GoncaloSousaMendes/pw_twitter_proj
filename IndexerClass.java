@@ -10,8 +10,10 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -49,13 +51,23 @@ public class IndexerClass {
 	
 	private String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
 	private String indexPath = "src/index";
-//	private String indexPath = "C:/Users/aluca_000/Google Drive/FCT/16-17/2º Semestre/Java/Ind Proj PW/src/index";
 
-	private String topicPath = "src/profiles/TREC2016-RTS-topics.json";
-
+//	private String topicPath = "src/profiles/TREC2016-RTS-topics.json";
+//	private String topicPath = "src/profiles/TREC2015-MB-eval-topics.json";
+//	private String topicPath = "src/profiles/TREC2015-MB-noeval-topics-culled.json";
+	private String topicPath = "src/profiles/pw_top_10_topics.json";
+	
+	
+	//save the tweets, to find repetitions
+	static Map <String, JSONObject> tweetsMap;
+	
 	private boolean create = true;
 
 	private IndexWriter idx;
+	
+	public IndexerClass(){
+		tweetsMap = new HashMap<String, JSONObject>();
+	}
 	
 	public void openIndex(Analyzer analyzer, Similarity similarity) {
 
@@ -99,8 +111,8 @@ public class IndexerClass {
 
 	}
 	
-	
 	public void indexDocuments() {
+		
 		if (idx == null)
 			return;
 		System.out.println("Indexing documents...");
@@ -139,7 +151,18 @@ public class IndexerClass {
 			
 			// Extract field Id
 			id = (String) tweet.get("id_str");
+			
+			//see if the tweet already exists
+			if(!tweetsMap.containsKey(id))
+				tweetsMap.put(id, tweet);
+			else {
+				//we don't need repeated tweets
+				return;
+			}
+			
 			doc.add(new TextField("Id", id, Field.Store.YES));
+			
+			
 			
 			// Extract Date
 			String date = (String) tweet.get("created_at");
@@ -158,7 +181,6 @@ public class IndexerClass {
 					JSONObject hash = (JSONObject) o;
 					tags += hash.get("text") + ";";
 			}
-//			System.out.println(tags);
 			doc.add(new TextField("Hashtags", tags, Field.Store.YES));
 
 			// Extract field Body
@@ -166,15 +188,18 @@ public class IndexerClass {
 			//retirar tags de html
 //			body = body.replaceAll("\\<[^>]*>","");
 			doc.add(new TextField("Text", body, Field.Store.YES));
+//			doc.add(new TextField("TextForTitle", body, Field.Store.YES));
+//			doc.add(new TextField("TextForDescription", body, Field.Store.YES));
+			
+			
+			
+
+
 			// ====================================================
 			// Add the document to the index
 			if (idx.getConfig().getOpenMode() == OpenMode.CREATE) {
-
-				//System.out.println("adding " + Id);
 				idx.addDocument(doc);
-
 			} else {
-//				System.out.println("Now what?");
 				idx.updateDocument(new Term("Id", id.toString()), doc);
 			}
 		} catch (IOException e) {
@@ -197,13 +222,11 @@ public class IndexerClass {
 		try {
 //			String submissionName = "baseline3_w0.9.txt";
 			String submissionName = "results.txt";
-			int numberOfTweets = 5;
-			boolean debug = true;
+			int numberOfTweets = 100;
+			boolean debug = false;
 			
 			
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(submissionName), "utf-8"));
-			//YYYYMMDD topic_id Q0 tweet_id rank score runtag
-			//writer.write("YYYYMMDD" + "topic_id" + "\t" +"Q0" + "\t" + "tweet_id" + "\t" + "rank" + "\t" + "score" + "\t" + "runtag\n");
 			//fetch index in the directory provided
 			reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
 			//initialize the searcher and the analyzer (the same one used to write the index)
@@ -220,7 +243,8 @@ public class IndexerClass {
 			 * Na posição 2 -> a descrição
 			 */
 			String[] queryL = new String[3];
-
+			
+//			String[] fields = {"Day", "TextForTitle", "TextForDescription" };
 			String[] fields = {"Day", "Text", "Text" };
 			BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST, BooleanClause.Occur.MUST, BooleanClause.Occur.MUST};
 
@@ -278,14 +302,18 @@ public class IndexerClass {
 							queryL[1] = queryL[1].replace("\"", "");
 							queryL[2] = queryL[2].replace("\"", "");
 							
+							queryL[1] = queryL[1].replace("/", "");
+							queryL[2] = queryL[2].replace("/", "");
+							
 							try {
 								query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
 							} catch (org.apache.lucene.queryparser.classic.ParseException e2) {
-//								System.out.println("Error parsing query string.");
-//								System.out.println(topicId);
-//								System.out.println(queryL[1]);
-//								System.out.println(queryL[2]);
+								System.out.println("Error parsing query string.");
+								System.out.println(topicId);
+								System.out.println(queryL[1]);
+								System.out.println(queryL[2]);
 								e2.printStackTrace();
+								System.exit(0);
 							}
 						}
 						
@@ -365,10 +393,6 @@ public class IndexerClass {
 
 
 	}
-
-	
-	
-
 	
 	protected void close() {
 		try {
