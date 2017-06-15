@@ -1,28 +1,18 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -31,7 +21,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -40,39 +29,37 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/**
+ * 
+ */
 
-public class IndexerClass {
-	
-	private String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
-	private String indexPath = "src/index";
-
-//	private String topicPath = "src/profiles/TREC2016-RTS-topics.json";
-//	private String topicPath = "src/profiles/TREC2015-MB-eval-topics.json";
-//	private String topicPath = "src/profiles/TREC2015-MB-noeval-topics-culled.json";
-	private String topicPath = "src/profiles/pw_top_10_topics.json";
+/**
+ * @author Moncada
+ *
+ */
+public abstract class IndexerAbstract implements Indexer {
 	
 	
-	private UserRank ranksForUsers;
+	protected String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
+	protected String indexPath = "src/index";
+	protected String topicPath = "src/profiles/pw_top_10_topics.json";
+	
+	protected UserRank ranksForUsers;
 	
 	//save the tweets, to find repetitions
-	private static Map <String, JSONObject> tweetsMap;
-	//save the hashtags for topic
-	private Map <String, List<String>> hashTagForTopic;
+	protected static Map <String, JSONObject> tweetsMap;
+
 	private boolean create = true;
 
 	private IndexWriter idx;
 	
-	public IndexerClass(){
+	public IndexerAbstract(){
 		tweetsMap = new HashMap<String, JSONObject>();
-		hashTagForTopic = new HashMap<String, List<String>>();
+		
 	}
 	
 	public void openIndex(Analyzer analyzer, Similarity similarity) {
@@ -359,9 +346,7 @@ public class IndexerClass {
 							// data para o ficheiro
 							String dateToWrite = dd[5] + "08" + dd[2];
 							double score = hits[j].score;
-							
-							
-							//TODO: Add userScore
+
 							if (userScore){
 //								System.out.println("\nScore:" + score);
 								String userId = doc.get("UserId");
@@ -416,7 +401,7 @@ public class IndexerClass {
 		}
 	}
 
-	private boolean writeToFile(Writer writer, String date, String topic_id, String tweet_id, int rank, double score, String runTag){
+	protected boolean writeToFile(Writer writer, String date, String topic_id, String tweet_id, int rank, double score, String runTag){
 		//writting format: YYYYMMDD topic_id Q0 tweet_id rank score runtag
 		try{
 			writer.write(date + "\t" + topic_id + "\t" + "0" + "\t" + tweet_id + "\t"+ rank +"\t" + score + "\t" + ("#" + runTag) + "\n");

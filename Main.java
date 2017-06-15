@@ -50,7 +50,7 @@ public class Main {
 		String run = args[0];
 		//Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball
 		String analysers = args[1];
-		int gramSzie =  Integer.valueOf(args[2]);
+		int gramSize =  Integer.valueOf(args[2]);
 		String sim =  args[3];
 		boolean userScore = false;
 		if(args[4].equals("true") || args[4].equals("false"))
@@ -62,9 +62,10 @@ public class Main {
 		String runTag = "run" + run;
 
 
-		AnalyserPers analyzerInField = new AnalyserPers(analysers, gramSzie);
+		AnalyserPers analyzerInField = new AnalyserPers(analysers, gramSize);
 		StandardAnalyzer ana = new StandardAnalyzer();
-		analyzerPerField.put("Text", analyzerInField);
+		analyzerPerField.put("Text", ana);
+		analyzerPerField.put("Hashtags", ana);
 		analyzerPerField.put("Day", ana);
 		PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
 		
@@ -82,21 +83,34 @@ public class Main {
 //		IndexerClassIncr indIncr = new IndexerClassIncr();
 //		indIncr.indexerAndQueriesController(analyzer, similarity);
 		
-		//indexação toda junta
-		IndexerClass indexer = new IndexerClass();
+		Indexer indexer = null;
+		
+//		indexer = new IndexerBase();
+		indexer = new IndexerHashtags();
+		
 		
 		indexer.openIndex(analyzer, similarity);
 		indexer.indexDocuments();
 		indexer.close();
-
 		
 		indexer.indexSearch(analyzer, similarity, runTag, userScore);
 		
 		
-		long finalTime = System.currentTimeMillis();
-		System.out.println("Done");
-		System.out.println("Time: " + (finalTime - intialTime));
+		//indexação toda junta
+//		IndexerClass indexer = new IndexerClass();
+//		
+//		indexer.openIndex(analyzer, similarity);
+//		indexer.indexDocuments();
+//		indexer.close();
+//
+//		
+//		indexer.indexSearch(analyzer, similarity, runTag, userScore);
 		
+		
+		long finalTime = System.currentTimeMillis();
+		
+		System.out.println("\nTime: " + (finalTime - intialTime));
+		System.out.println("Computing results");
 		String nameFile = runTag + ".txt";
 		
 		try{    
@@ -112,7 +126,7 @@ public class Main {
 		}
 		
 		
-		  
+		System.out.println("Done");
 
 	}
 
