@@ -174,7 +174,9 @@ public class IndexerClass {
 			
 			doc.add(new TextField("Id", id, Field.Store.YES));
 			
-			
+			String userId = (String)  ( (JSONObject) tweet.get("user")).get("id_str");
+			doc.add(new TextField("UserId", userId, Field.Store.YES));		
+					
 			
 			// Extract Date
 			String date = (String) tweet.get("created_at");
@@ -224,7 +226,7 @@ public class IndexerClass {
 		}
 	}
 
-	public void indexSearch(Analyzer analyzer, Similarity similarity, String runTag) {
+	public void indexSearch(Analyzer analyzer, Similarity similarity, String runTag, boolean userScore) {
 		System.out.println("Quering and results...");
 
 		//The index reader
@@ -290,10 +292,10 @@ public class IndexerClass {
 				String topicTitle = "";
 				String topicId = "";
 				
-				int i = 0;
+//				int i = 0;
 				//Percorrer os dias
 				for (String day : days){
-					i++;
+//					i++;
 					for (Object topicObject : topics){
 						
 						// get the topic and its atributes
@@ -349,10 +351,18 @@ public class IndexerClass {
 							String[] dd = date.split(" ");
 							// data para o ficheiro
 							String dateToWrite = dd[5] + "08" + dd[2];
-							float score = hits[j].score;
+							double score = hits[j].score;
 							
 							
 							//TODO: Add userScore
+							if (userScore){
+//								System.out.println("\nScore:" + score);
+								String userId = doc.get("UserId");
+								double scoreFromUser = ranksForUsers.getUserScore(userId);
+								score = 0.8*score + 0.2*scoreFromUser;
+//								System.out.println("Score from user: " + scoreFromUser);
+//								System.out.println("New score:" + score);
+							}
 							
 							if (debug && j<numberResults){
 								String text = doc.get("Text");
@@ -399,7 +409,7 @@ public class IndexerClass {
 		}
 	}
 
-	private boolean writeToFile(Writer writer, String date, String topic_id, String tweet_id, int rank, float score, String runTag){
+	private boolean writeToFile(Writer writer, String date, String topic_id, String tweet_id, int rank, double score, String runTag){
 		//writting format: YYYYMMDD topic_id Q0 tweet_id rank score runtag
 		try{
 			writer.write(date + "\t" + topic_id + "\t" + "0" + "\t" + tweet_id + "\t"+ rank +"\t" + score + "\t" + ("#" + runTag) + "\n");

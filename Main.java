@@ -37,9 +37,9 @@ public class Main {
 		
 		// Mudar a variavel para fazer diferentes runs e guardar com nomes diferentes
 		
-		if(args.length != 4){
+		if(args.length != 5){
 			System.out.println("Not enough arguments");
-			System.out.println("Usage: int numbeOfTheRun String analysers int gramSize String similarities");
+			System.out.println("Usage: int numbeOfTheRun String analysers int gramSize String similarities boolean UseUserScore");
 			System.out.println("Possible analysers: Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball;");
 			System.out.println("Possible similarities: BM25;LMD;Classic;");
 			System.out.println("Only one similarity per run");
@@ -52,7 +52,15 @@ public class Main {
 		String analysers = args[1];
 		int gramSzie =  Integer.valueOf(args[2]);
 		String sim =  args[3];
+		boolean userScore = false;
+		if(args[4].equals("true") || args[4].equals("false"))
+			userScore =  Boolean.valueOf(args[4]);
+		else{
+			System.out.println("Invalid boolean argument: use 'true' or 'false'");
+		}
+
 		String runTag = "run" + run;
+
 
 		AnalyserPers analyzerInField = new AnalyserPers(analysers, gramSzie);
 		StandardAnalyzer ana = new StandardAnalyzer();
@@ -82,7 +90,7 @@ public class Main {
 		indexer.close();
 
 		
-		indexer.indexSearch(analyzer, similarity, runTag);
+		indexer.indexSearch(analyzer, similarity, runTag, userScore);
 		
 		
 		long finalTime = System.currentTimeMillis();

@@ -141,11 +141,6 @@ public class UserRank {
 			long nTweets = u.getNumberOfTweets();
 			long nDays = u.getDaysOnTwitter();
 			long nFol = u.getNumberOfFollowers();
-			
-
-			
-//			double score =  (0.5 *  ((double)nTweets/(double)nDays)) * ( 0.5 *  ((double)nFol/(double)maxFollowers));
-			
 			double score =  (((double)nTweets/(double)nDays)) * (((double)nFol/(double)maxFollowers));
 			
 			u.setScore(score);
@@ -155,8 +150,6 @@ public class UserRank {
 //			System.out.println("Number followers: " + nFol);
 //			System.out.println(u.getNumberOfTweetsOnTREC());
 //			System.out.println(score);
-			
-//			System.exit(0);
 		}
 		
 	}
@@ -166,7 +159,8 @@ public class UserRank {
 	}
 	
 	public double getUserScore(String id){
-		return users.get(id).getScore();
+		return users.containsKey(id) ? users.get(id).getScore() : 0.0;
+
 	}
 
 }
