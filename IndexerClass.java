@@ -235,7 +235,7 @@ public class IndexerClass {
 		try {
 //			String submissionName = "baseline3_w0.9.txt";
 			// ficheiro para escrever os resultados para a avaliação
-			String submissionName = runTag + ".txt";
+			String submissionName = "src/evaluation/results_java/"+runTag + ".txt";
 //			String submissionName = "results.txt";
 			// numero de tweets a guardar
 			int numberOfTweets = 100;

@@ -5,6 +5,7 @@
 //import java.util.Set;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,6 +88,20 @@ public class Main {
 		long finalTime = System.currentTimeMillis();
 		System.out.println("Done");
 		System.out.println("Time: " + (finalTime - intialTime));
+		
+		String nameFile = runTag + ".txt";
+		
+		try{    
+		    Process p = Runtime.getRuntime().exec(" cmd /c run_eval.bat " + nameFile);
+		    p.waitFor();
+
+		}catch( IOException ex ){
+		    //Validate the case the file can't be accesed (not enought permissions)
+
+		}catch( InterruptedException ex ){
+		    //Validate the case the process is being stopped by some external situation     
+
+		}
 		
 		
 		  
