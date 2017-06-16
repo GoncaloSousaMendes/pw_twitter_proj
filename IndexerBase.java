@@ -182,22 +182,25 @@ public class IndexerBase extends IndexerAbstract {
 								System.out.println("\nScore: " + score);
 								String userId = doc.get("UserId");
 								double scoreFromUser = ranksForUsers.getUserScore(userId);
-//								score = (0.8*(score/100)) + 0.2*scoreFromUser;
-								score = (1.0*(score)) + 0.0*scoreFromUser;
+								score = (0.9*score) + 0.1*scoreFromUser;
+//								score = (1.0*(score)) + 0.0*scoreFromUser;
 								System.out.println("Score from user: " + scoreFromUser);
 								System.out.println("New score: " + score);
 								
 
 								if(!orderedSet.containsKey(score))
 									orderedSet.put(score, j);
-								else
-									if(valuesToOrder.containsKey(score))
-										valuesToOrder.get(score).add(j);
+								else //existem scores repetidos
+									if(valuesToOrder.containsKey(score)){
+										int s = valuesToOrder.get(score).size();
+										//adicionar ao fim da lista
+										valuesToOrder.get(score).add(s-1, j);
+									}
+										
 									else{
 										List<Integer> l = new LinkedList<Integer>();
 										l.add(j);
 										valuesToOrder.put(score, l);
-										orderedSet.put(score, j);
 									}
 							}
 							
@@ -214,40 +217,29 @@ public class IndexerBase extends IndexerAbstract {
 						}
 						
 						if (userScore){
-							
-						
-							
-							Set<Entry<Double, Integer>> set = orderedSet.entrySet();
-//							
-//							NavigableMap <Double, Integer> des = orderedSet.descendingMap();
-//							
-//							Iterator it = des
-//									
-//
-//									NavigableMap <Long, String> nmap = treeMap.descendingMap();
-//
-//							Set<Long, String> set = nmap.entrySet();
-//
-//							Iterator<Long, String> iterator = set.iterator();
-							
+							// itarar pela ordem descendente
+							NavigableMap <Double, Integer> nmap = orderedSet.descendingMap();
+							Set<Entry<Double, Integer>> set = nmap.entrySet();
 							Iterator<Entry<Double, Integer>>  it = set.iterator();
 							int x = 1;
 							while(it.hasNext()){
 								Entry<Double, Integer> run = it.next();
 								int posDoc = run.getValue();
 								double scoreDoc = run.getKey();
-								if(valuesToOrder.containsKey(scoreDoc))
-									for(int pos: valuesToOrder.get(scoreDoc)){
-										Document doc = searcher.doc(hits[pos].doc);
+								if(valuesToOrder.containsKey(scoreDoc)){
+									Iterator<Integer> itt = valuesToOrder.get(scoreDoc).iterator();
+									while(itt.hasNext()){
+										Document doc = searcher.doc(hits[itt.next()].doc);
 										String tweetId = doc.get("Id");
 										String date = doc.get("Date");
 										String[] dd = date.split(" ");
 										// data para o ficheiro
 										String dateToWrite = dd[5] + "08" + dd[2];
-										
+
 										writeToFile(writer, dateToWrite, topicId, tweetId, x, scoreDoc, runTag);
 										x++;
 									}
+								}
 								else{
 									Document doc = searcher.doc(hits[posDoc].doc);
 									String tweetId = doc.get("Id");
@@ -259,15 +251,6 @@ public class IndexerBase extends IndexerAbstract {
 									writeToFile(writer, dateToWrite, topicId, tweetId, x, scoreDoc, runTag);
 									x++;
 								}
-//								Document doc = searcher.doc(hits[posDoc].doc);
-//								String tweetId = doc.get("Id");
-//								String date = doc.get("Date");
-//								String[] dd = date.split(" ");
-//								// data para o ficheiro
-//								String dateToWrite = dd[5] + "08" + dd[2];
-//								
-//								writeToFile(writer, dateToWrite, topicId, tweetId, x, scoreDoc, runTag);
-//								x++;
 							}
 						}
 						
