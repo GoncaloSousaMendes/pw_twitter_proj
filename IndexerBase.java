@@ -4,6 +4,15 @@ import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -28,8 +37,8 @@ public class IndexerBase extends IndexerAbstract {
 
 
 
-	public IndexerBase(){
-		super();
+	public IndexerBase(boolean useReduced,boolean test){
+		super(useReduced,test);
 	}
 
 	@Override
@@ -49,7 +58,7 @@ public class IndexerBase extends IndexerAbstract {
 			// numero de tweets a guardar
 			int numberOfTweets = 100;
 			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
-			boolean debug = false;
+
 			int numberResults = 2;
 			
 			
@@ -151,7 +160,12 @@ public class IndexerBase extends IndexerAbstract {
 							System.out.println(description);
 							System.out.println(numTotalHits + " total matching documents");
 						}
-
+						
+						TreeMap<Double, Integer> orderedSet = new TreeMap<Double, Integer>();
+						
+						// há scores repetidos, é necessário guardar-los
+						Map <Double,List<Integer>> valuesToOrder = new HashMap<Double,List<Integer>>();
+					
 						
 						//iterate through the answers 
 						for (int j = 0; j < numberOfTweets && j < numTotalHits; j++) {
@@ -165,12 +179,26 @@ public class IndexerBase extends IndexerAbstract {
 							double score = hits[j].score;
 
 							if (userScore){
-//								System.out.println("\nScore:" + score);
+								System.out.println("\nScore: " + score);
 								String userId = doc.get("UserId");
 								double scoreFromUser = ranksForUsers.getUserScore(userId);
-								score = 0.8*score + 0.2*scoreFromUser;
-//								System.out.println("Score from user: " + scoreFromUser);
-//								System.out.println("New score:" + score);
+//								score = (0.8*(score/100)) + 0.2*scoreFromUser;
+								score = (1.0*(score)) + 0.0*scoreFromUser;
+								System.out.println("Score from user: " + scoreFromUser);
+								System.out.println("New score: " + score);
+								
+
+								if(!orderedSet.containsKey(score))
+									orderedSet.put(score, j);
+								else
+									if(valuesToOrder.containsKey(score))
+										valuesToOrder.get(score).add(j);
+									else{
+										List<Integer> l = new LinkedList<Integer>();
+										l.add(j);
+										valuesToOrder.put(score, l);
+										orderedSet.put(score, j);
+									}
 							}
 							
 							if (debug && j<numberResults){
@@ -181,8 +209,66 @@ public class IndexerBase extends IndexerAbstract {
 								System.out.println("#" + hashtags);
 							}
 							//escrever para o ficheiro
-							writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
+							if (!userScore) writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
 
+						}
+						
+						if (userScore){
+							
+						
+							
+							Set<Entry<Double, Integer>> set = orderedSet.entrySet();
+//							
+//							NavigableMap <Double, Integer> des = orderedSet.descendingMap();
+//							
+//							Iterator it = des
+//									
+//
+//									NavigableMap <Long, String> nmap = treeMap.descendingMap();
+//
+//							Set<Long, String> set = nmap.entrySet();
+//
+//							Iterator<Long, String> iterator = set.iterator();
+							
+							Iterator<Entry<Double, Integer>>  it = set.iterator();
+							int x = 1;
+							while(it.hasNext()){
+								Entry<Double, Integer> run = it.next();
+								int posDoc = run.getValue();
+								double scoreDoc = run.getKey();
+								if(valuesToOrder.containsKey(scoreDoc))
+									for(int pos: valuesToOrder.get(scoreDoc)){
+										Document doc = searcher.doc(hits[pos].doc);
+										String tweetId = doc.get("Id");
+										String date = doc.get("Date");
+										String[] dd = date.split(" ");
+										// data para o ficheiro
+										String dateToWrite = dd[5] + "08" + dd[2];
+										
+										writeToFile(writer, dateToWrite, topicId, tweetId, x, scoreDoc, runTag);
+										x++;
+									}
+								else{
+									Document doc = searcher.doc(hits[posDoc].doc);
+									String tweetId = doc.get("Id");
+									String date = doc.get("Date");
+									String[] dd = date.split(" ");
+									// data para o ficheiro
+									String dateToWrite = dd[5] + "08" + dd[2];
+									
+									writeToFile(writer, dateToWrite, topicId, tweetId, x, scoreDoc, runTag);
+									x++;
+								}
+//								Document doc = searcher.doc(hits[posDoc].doc);
+//								String tweetId = doc.get("Id");
+//								String date = doc.get("Date");
+//								String[] dd = date.split(" ");
+//								// data para o ficheiro
+//								String dateToWrite = dd[5] + "08" + dd[2];
+//								
+//								writeToFile(writer, dateToWrite, topicId, tweetId, x, scoreDoc, runTag);
+//								x++;
+							}
 						}
 						
 					 } 

@@ -27,8 +27,8 @@ import org.json.simple.parser.JSONParser;
  */
 public class IndexerHashtags extends IndexerAbstract {
 
-	public IndexerHashtags() {
-		super();
+	public IndexerHashtags(boolean useReduced,boolean test) {
+		super(useReduced,test);
 	}
 	
 	@Override
@@ -48,7 +48,7 @@ public class IndexerHashtags extends IndexerAbstract {
 			// numero de tweets a guardar
 			int numberOfTweets = 100;
 			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
-			boolean debug = false;
+
 			int numberResults = 2;
 			
 			

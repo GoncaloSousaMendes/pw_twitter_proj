@@ -31,15 +31,15 @@ public class Main {
 
 	public static void main(String[] args) {
 		
-		
+		boolean test = false;
 		long intialTime = System.currentTimeMillis();
 		Map<String, Analyzer> analyzerPerField = new HashMap<>();
 		
 		// Mudar a variavel para fazer diferentes runs e guardar com nomes diferentes
-		
+
 		if(args.length != 5){
 			System.out.println("Not enough arguments");
-			System.out.println("Usage: int numbeOfTheRun String analysers int gramSize String similarities boolean UseUserScore");
+			System.out.println("Usage: int numbeOfTheRun String analysers String similarities boolean UseUserScore boolean reducedTweets");
 			System.out.println("Possible analysers: Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball;");
 			System.out.println("Possible similarities: BM25;LMD;Classic;");
 			System.out.println("Only one similarity per run");
@@ -50,11 +50,16 @@ public class Main {
 		String run = args[0];
 		//Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball
 		String analysers = args[1];
-		int gramSize =  Integer.valueOf(args[2]);
-		String sim =  args[3];
+		String sim =  args[2];
 		boolean userScore = false;
+		if(args[3].equals("true") || args[3].equals("false"))
+			userScore =  Boolean.valueOf(args[3]);
+		else{
+			System.out.println("Invalid boolean argument: use 'true' or 'false'");
+		}
+		boolean useReduced = false;
 		if(args[4].equals("true") || args[4].equals("false"))
-			userScore =  Boolean.valueOf(args[4]);
+			useReduced =  Boolean.valueOf(args[4]);
 		else{
 			System.out.println("Invalid boolean argument: use 'true' or 'false'");
 		}
@@ -62,7 +67,7 @@ public class Main {
 		String runTag = "run" + run;
 
 
-		AnalyserPers analyzerInField = new AnalyserPers(analysers, gramSize);
+		AnalyserPers analyzerInField = new AnalyserPers(analysers);
 		StandardAnalyzer ana = new StandardAnalyzer();
 		analyzerPerField.put("Text", ana);
 //		analyzerPerField.put("Hashtags", ana);
@@ -86,9 +91,9 @@ public class Main {
 		
 		Indexer indexer = null;
 		
-//		indexer = new IndexerBase();
-//		indexer = new IndexerHashtags();
-		indexer = new IndexerHashtagsInTopic();
+		indexer = new IndexerBase(useReduced,test);
+//		indexer = new IndexerHashtags(useReduced,test);
+//		indexer = new IndexerHashtagsInTopic(useReduced,test);
 		
 		
 		indexer.openIndex(analyzer, similarity);
@@ -96,19 +101,8 @@ public class Main {
 		indexer.close();
 		
 		indexer.indexSearch(analyzer, similarity, runTag, userScore);
-		
-		
-		//indexação toda junta
-//		IndexerClass indexer = new IndexerClass();
-//		
-		indexer.openIndex(analyzer, similarity);
-		indexer.indexDocuments();
-		indexer.close();
-//
-//		
-//		indexer.indexSearch(analyzer, similarity, runTag, userScore);
-		
-		
+
+
 		long finalTime = System.currentTimeMillis();
 		
 		System.out.println("\nTime: " + (finalTime - intialTime));

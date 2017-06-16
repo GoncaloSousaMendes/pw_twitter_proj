@@ -37,16 +37,14 @@ public class AnalyserPers extends StopwordAnalyzerBase {
 	//Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball
 	// String containing the analysers to use
 	private String analysers;
-	//The size of the grams
-	private int gramSize;
+
 
 	/**
 	 * Builds an analyzer with the default stop words ({@link #STOP_WORDS_SET}).
 	 */
-	public AnalyserPers(String analysers, int gramS) {
+	public AnalyserPers(String analysers) {
 		super(stopSet);
 		this.analysers = analysers;
-		this.gramSize = gramS;
 	}
 
 	@Override

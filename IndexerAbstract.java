@@ -45,8 +45,8 @@ public abstract class IndexerAbstract implements Indexer {
 	
 	
 //	protected String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
-	protected String tweetsPath = "src/tweets/rts2016-qrels-sim-tweets2016.jsonl";
-	
+//	protected String tweetsPath = "src/tweets/rts2016-qrels-sim-tweets2016.jsonl";
+	protected String tweetsPath;
 	
 	
 	protected String indexPath = "src/index";
@@ -63,9 +63,14 @@ public abstract class IndexerAbstract implements Indexer {
 
 	private IndexWriter idx;
 	
-	public IndexerAbstract(){
+	boolean debug;
+	
+	public IndexerAbstract(boolean useReduced, boolean test){
 		tweetsMap = new HashMap<String, JSONObject>();
 		
+		tweetsPath = useReduced ? "src/tweets/rts2016-qrels-sim-tweets2016.jsonl" : "src/tweets/rts2016-qrels-tweets2016.jsonl";
+		
+		debug = test;
 	}
 	
 	public void openIndex(Analyzer analyzer, Similarity similarity) {
@@ -235,7 +240,7 @@ public abstract class IndexerAbstract implements Indexer {
 			// numero de tweets a guardar
 			int numberOfTweets = 100;
 			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
-			boolean debug = true;
+//			boolean debug = true;
 			int numberResults = 2;
 			
 			

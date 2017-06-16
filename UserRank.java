@@ -141,7 +141,9 @@ public class UserRank {
 			long nTweets = u.getNumberOfTweets();
 			long nDays = u.getDaysOnTwitter();
 			long nFol = u.getNumberOfFollowers();
-			double score =  (((double)nTweets/(double)nDays)) * (((double)nFol/(double)maxFollowers));
+//			double score =  (((double)nTweets/(double)nDays)) * (((double)nFol/(double)maxFollowers));
+			
+			double score =  (((double)nTweets/(double)nDays)) * (((double)nFol/(double)nDays));
 			
 			u.setScore(score);
 //			System.out.println("");

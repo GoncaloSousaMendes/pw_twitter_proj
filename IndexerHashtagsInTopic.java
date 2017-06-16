@@ -37,8 +37,8 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 	// key: topic_id; value: hashtags
 	protected Map <String, String> hashTagForTopic;
 	
-	public IndexerHashtagsInTopic() {
-		super();
+	public IndexerHashtagsInTopic(boolean useReduced,boolean test) {
+		super(useReduced,test);
 		hashTagForTopic = new HashMap<String, String>();
 	}
 	
@@ -59,7 +59,6 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 			// numero de tweets a guardar
 			int numberOfTweets = 100;
 			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
-			boolean debug = false;
 			int numberResults = 2;
 			
 			
