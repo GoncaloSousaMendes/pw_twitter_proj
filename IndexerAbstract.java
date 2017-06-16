@@ -44,9 +44,15 @@ import org.json.simple.parser.JSONParser;
 public abstract class IndexerAbstract implements Indexer {
 	
 	
-	protected String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
+//	protected String tweetsPath = "src/tweets/rts2016-qrels-tweets2016.jsonl";
+	protected String tweetsPath = "src/tweets/rts2016-qrels-sim-tweets2016.jsonl";
+	
+	
+	
 	protected String indexPath = "src/index";
-	protected String topicPath = "src/profiles/pw_top_10_topics.json";
+//	protected String topicPath = "src/profiles/pw_top_10_topics.json";
+	protected String topicPath = "src/profiles/pw_top_stable_topics.json";
+	
 	
 	protected UserRank ranksForUsers;
 	

@@ -65,7 +65,7 @@ public class Main {
 		AnalyserPers analyzerInField = new AnalyserPers(analysers, gramSize);
 		StandardAnalyzer ana = new StandardAnalyzer();
 		analyzerPerField.put("Text", ana);
-		analyzerPerField.put("Hashtags", ana);
+//		analyzerPerField.put("Hashtags", ana);
 		analyzerPerField.put("Day", ana);
 		PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
 		
@@ -78,6 +78,7 @@ public class Main {
 			similarity = new LMDirichletSimilarity();
 		else if(sim.equals("Classic"))
 			similarity = new ClassicSimilarity(); //TFIDF
+//		System.out.println("Similarity: " + similarity.toString());
 		
 		// Incremental
 //		IndexerClassIncr indIncr = new IndexerClassIncr();
@@ -86,7 +87,8 @@ public class Main {
 		Indexer indexer = null;
 		
 //		indexer = new IndexerBase();
-		indexer = new IndexerHashtags();
+//		indexer = new IndexerHashtags();
+		indexer = new IndexerHashtagsInTopic();
 		
 		
 		indexer.openIndex(analyzer, similarity);
@@ -99,9 +101,9 @@ public class Main {
 		//indexação toda junta
 //		IndexerClass indexer = new IndexerClass();
 //		
-//		indexer.openIndex(analyzer, similarity);
-//		indexer.indexDocuments();
-//		indexer.close();
+		indexer.openIndex(analyzer, similarity);
+		indexer.indexDocuments();
+		indexer.close();
 //
 //		
 //		indexer.indexSearch(analyzer, similarity, runTag, userScore);

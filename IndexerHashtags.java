@@ -23,7 +23,7 @@ import org.json.simple.parser.JSONParser;
 
 
 /*
- * Indexer que testa hashtags contra o titulo do topico
+ * Indexer que testa hashtags com o titulo do topico
  */
 public class IndexerHashtags extends IndexerAbstract {
 
@@ -71,6 +71,7 @@ public class IndexerHashtags extends IndexerAbstract {
 
 			// Para correr com hashtags sim
 			String[] queryL = new String[4];
+			// correspondem:   dia    titulo  descrição  hashstags
 			String[] fields = {"Day", "Text", "Text", "Hashtags" };
 			BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST, BooleanClause.Occur.MUST, BooleanClause.Occur.SHOULD, BooleanClause.Occur.SHOULD};
 

@@ -98,10 +98,14 @@ public class IndexerBase extends IndexerAbstract {
 				String topicTitle = "";
 				String topicId = "";
 				
-//				int i = 0;
+
 				//Percorrer os dias
 				for (String day : days){
-//					i++;
+					if (debug){
+						System.out.println("\n-------------------------------------------------------------------------------------------");
+						System.out.println("------------------------------------NEW DAY------------------------------------------------");
+						System.out.println("-------------------------------------------------------------------------------------------\n");
+					}
 					for (Object topicObject : topics){
 						
 						// get the topic and its atributes
