@@ -91,9 +91,10 @@ public class Main {
 		
 		Indexer indexer = null;
 		
-		indexer = new IndexerBase(useReduced,test);
+//		indexer = new IndexerBase(useReduced,test);
 //		indexer = new IndexerHashtags(useReduced,test);
 //		indexer = new IndexerHashtagsInTopic(useReduced,test);
+		indexer = new IndexerThreeFields(useReduced, test);
 		
 		
 		indexer.openIndex(analyzer, similarity);

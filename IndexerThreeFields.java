@@ -4,7 +4,6 @@ import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -31,22 +30,23 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-/*
- * Indexer que associa as hashtags do top n tweets ao topico,
- * este começa com as hashtags que são retiradas do titulo do topico
+/**
+ * 
  */
 
-public class IndexerHashtagsInTopic extends IndexerAbstract {
+/**
+ * @author Moncada
+ *
+ */
+public class IndexerThreeFields extends IndexerAbstract {
 
-	// save the hashtags for topic
-	// key: topic_id; value: hashtags
-	protected Map <String, String> hashTagForTopic;
-	
-	public IndexerHashtagsInTopic(boolean useReduced,boolean test) {
+	/**
+	 * 
+	 */
+	public IndexerThreeFields(boolean useReduced,boolean test) {
 		super(useReduced,test);
-		hashTagForTopic = new HashMap<String, String>();
 	}
-	
+
 	@Override
 	public void indexSearch(Analyzer analyzer, Similarity similarity, String runTag, boolean userScore) {
 		System.out.println("Quering and results...");
@@ -64,6 +64,7 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 			// numero de tweets a guardar
 			int numberOfTweets = 100;
 			// Para fazer debug, fas print do titulo do topic e dos primeiros numberResults resultados
+
 			int numberResults = 2;
 			
 			
@@ -82,15 +83,12 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 			 * Na posição 0 -> o dia
 			 * Na posição 1 -> o titulo
 			 * Na posição 2 -> a descrição
-			 * Na posição 3 -> hashtags retiradas do topic
 			 */
 			//Para correr sem hashtags sim
-			// Para correr com hashtags sim
 			String[] queryL = new String[4];
-			// correspondem:   dia    titulo  descrição  hashstags
-			String[] fields = {"Day", "Text",  "Text",    "Text" };
+			String[] fields = {"Day", "Text", "Text", "text" };
 			BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST, BooleanClause.Occur.MUST, BooleanClause.Occur.SHOULD, BooleanClause.Occur.SHOULD};
-	
+			
 			// Para percorrer os dias
 			String [] days = new String [10];
 			days[0] = "02";
@@ -112,21 +110,9 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 				
 				JSONArray topics = (JSONArray) parser.parse(new FileReader(topicPath));
 				
-				
 				String topicTitle = "";
 				String topicId = "";
 				
-				//adicionar as hashtags ao topic -> hashTagForTopic <String, String>
-				for (Object topicObject : topics){
-					JSONObject topic = (JSONObject) topicObject;
-					topicId = (String) topic.get("topid");
-					topicTitle = (String)  topic.get("title");
-					
-					if(!hashTagForTopic.containsKey(topicId))
-						hashTagForTopic.put(topicId, topicTitle);
-					else
-						System.out.println("Topic Id repeated!");	
-				}
 
 				//Percorrer os dias
 				for (String day : days){
@@ -135,7 +121,6 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 						System.out.println("------------------------------------NEW DAY------------------------------------------------");
 						System.out.println("-------------------------------------------------------------------------------------------\n");
 					}
-
 					for (Object topicObject : topics){
 						
 						// get the topic and its atributes
@@ -143,29 +128,32 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 						topicId = (String) topic.get("topid");
 						topicTitle = (String)  topic.get("title");
 						String description = (String)  topic.get("description");
-						String tags = hashTagForTopic.get(topicId);
+						String narrative = (String) topic.get("narrative");
 						
 						queryL[0] = day;
 						queryL[1] = topicTitle;
 						queryL[2] = description;
-						queryL[3] = tags;
-						
-						// some topics have bad char
-						for (int i=0; i< queryL.length; i++){
-							queryL[i] = queryL[i].replace("\"", "");
-							queryL[i] = queryL[i].replace("/", "");
-						}
+						queryL[3] = narrative;
 						
 						try {
 							query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
 						} catch (org.apache.lucene.queryparser.classic.ParseException e) {
-							System.out.println("Error parsing query string.");
-							System.out.println(topicId);
-							System.out.println(queryL[1]);
-							System.out.println(queryL[2]);
-							e.printStackTrace();
-							System.exit(0);
+							// some topics have bad char
+							for (int i=0; i< queryL.length; i++){
+								queryL[i] = queryL[i].replace("\"", "");
+								queryL[i] = queryL[i].replace("/", "");
+							}
 
+							try {
+								query = MultiFieldQueryParser.parse(queryL, fields, flags, analyzer);
+							} catch (org.apache.lucene.queryparser.classic.ParseException e2) {
+								System.out.println("Error parsing query string.");
+								System.out.println(topicId);
+								System.out.println(queryL[1]);
+								System.out.println(queryL[2]);
+								e2.printStackTrace();
+								System.exit(0);
+							}
 						}
 						
 						
@@ -178,21 +166,14 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 							System.out.println("-------------------------------------------------------------------------------------------");
 							System.out.println(topicTitle + " " + topicId);
 							System.out.println(description);
-							System.out.println(tags);
 							System.out.println(numTotalHits + " total matching documents");
 						}
-
-						String newTags ="";
-						Map <String,String> tagsInd = new HashMap<String,String>();
-						
-						String[] tags_s = tags.split(" ");
-						for (String s: tags_s)
-							tagsInd.put(s, s);
 						
 						TreeMap<Double, Integer> orderedSet = new TreeMap<Double, Integer>();
 						
 						// há scores repetidos, é necessário guardar-los
 						Map <Double,List<Integer>> valuesToOrder = new HashMap<Double,List<Integer>>();
+					
 						
 						//iterate through the answers 
 						for (int j = 0; j < numberOfTweets && j < numTotalHits; j++) {
@@ -201,19 +182,10 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 							String tweetId = doc.get("Id");
 							String date = doc.get("Date");
 							String[] dd = date.split(" ");
-							String hashtags = doc.get("Hashtags");
 							// data para o ficheiro
 							String dateToWrite = dd[5] + "08" + dd[2];
 							double score = hits[j].score;
-							
-							// adicionar as hashtags dos primeiros 5 tweets
-							if(j<5){
-								
-								tags_s = hashtags.split(" ");
-								for (String s: tags_s)
-									tagsInd.put(s, s);
-							}
-							
+
 							if (userScore){
 								System.out.println("\nScore: " + score);
 								String userId = doc.get("UserId");
@@ -242,6 +214,7 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 							
 							if (debug && j<numberResults){
 								String text = doc.get("Text");
+								String hashtags = doc.get("Hashtags");
 								System.out.println(date);
 								System.out.println(text);
 								System.out.println("#" + hashtags);
@@ -250,13 +223,6 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 							if (!userScore) writeToFile(writer, dateToWrite, topicId, tweetId, (j+1), score, runTag);
 
 						}
-						
-						Iterator<String> it2 = tagsInd.keySet().iterator();
-						while(it2.hasNext())
-							newTags += it2.next() + " ";
-
-						if(hashTagForTopic.containsKey(topicId))
-							hashTagForTopic.put(topicId, newTags);
 						
 						if (userScore){
 							// itarar pela ordem descendente
@@ -296,8 +262,6 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 							}
 						}
 						
-						
-						
 					 } 
 				}
 						
@@ -324,5 +288,5 @@ public class IndexerHashtagsInTopic extends IndexerAbstract {
 
 	}
 
-
+	
 }
