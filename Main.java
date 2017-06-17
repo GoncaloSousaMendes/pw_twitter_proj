@@ -37,9 +37,9 @@ public class Main {
 		
 		// Mudar a variavel para fazer diferentes runs e guardar com nomes diferentes
 
-		if(args.length != 5){
+		if(args.length != 7){
 			System.out.println("Not enough arguments");
-			System.out.println("Usage: int numbeOfTheRun String analysers String similarities boolean UseUserScore boolean reducedTweets");
+			System.out.println("Usage: int numbeOfTheRun String analysers String similarities boolean UseUserScore boolean reducedTweets float k float b");
 			System.out.println("Possible analysers: Standard;Lower;Stop;Shingle;Common;NGramToken;EdgeNGram;Snowball;");
 			System.out.println("Possible similarities: BM25;LMD;Classic;");
 			System.out.println("Only one similarity per run");
@@ -63,13 +63,18 @@ public class Main {
 		else{
 			System.out.println("Invalid boolean argument: use 'true' or 'false'");
 		}
-
+		
+		float k = 0;
+		float b = 0;
+		
+		k = Float.valueOf(args[5]);
+		b = Float.valueOf(args[6]);
 		String runTag = "run" + run;
 
 
 		AnalyserPers analyzerInField = new AnalyserPers(analysers);
 		StandardAnalyzer ana = new StandardAnalyzer();
-		analyzerPerField.put("Text", ana);
+		analyzerPerField.put("Text", analyzerInField);
 //		analyzerPerField.put("Hashtags", ana);
 		analyzerPerField.put("Day", ana);
 		PerFieldAnalyzerWrapper analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
@@ -78,7 +83,7 @@ public class Main {
 		
 		Similarity similarity = null;
 		if (sim.equals("BM25"))
-			similarity = new BM25Similarity();
+			similarity = new BM25Similarity(k, b);
 		else if(sim.equals("LMD"))
 			similarity = new LMDirichletSimilarity();
 		else if(sim.equals("Classic"))
@@ -91,10 +96,10 @@ public class Main {
 		
 		Indexer indexer = null;
 		
-//		indexer = new IndexerBase(useReduced,test);
+		indexer = new IndexerBase(useReduced,test);
 //		indexer = new IndexerHashtags(useReduced,test);
 //		indexer = new IndexerHashtagsInTopic(useReduced,test);
-		indexer = new IndexerThreeFields(useReduced, test);
+//		indexer = new IndexerThreeFields(useReduced, test);
 		
 		
 		indexer.openIndex(analyzer, similarity);

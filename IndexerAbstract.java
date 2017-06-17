@@ -93,6 +93,7 @@ public abstract class IndexerAbstract implements Indexer {
 			//
 			// iwc.setRAMBufferSizeMB(256.0);
 			IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+//			System.out.println(iwc.getSimilarity().toString());
 			if (similarity != null)
 				iwc.setSimilarity(similarity);
 			if (create) {
@@ -198,7 +199,7 @@ public abstract class IndexerAbstract implements Indexer {
 			// Extract field Body
 			String body = (String) tweet.get("text");
 			//retirar tags de html
-//			body = body.replaceAll("\\<[^>]*>","");
+			body = body.replaceAll("\\<[^>]*>","");
 			doc.add(new TextField("Text", body, Field.Store.YES));
 //			doc.add(new TextField("TextForTitle", body, Field.Store.YES));
 //			doc.add(new TextField("TextForDescription", body, Field.Store.YES));
